@@ -20,6 +20,7 @@ package org.nuxeo.runtime.test.runner;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -93,7 +94,14 @@ public class AnnotationScanner {
         }
         visitedClasses.add(clazz);
         List<Annotation> result = new ArrayList<Annotation>(); // collect only the annotation on this class
-        result.addAll(Arrays.asList(clazz.getAnnotations()));
+        try {
+            Annotation[] data = clazz.getAnnotations();
+            result.addAll(Arrays.asList(data));
+        } catch (ArrayStoreException cause) {
+            throw new AssertionError(
+                    "Cannot load annotations of " + clazz.getName() + ", check your classpath for missing classes (" + ((URLClassLoader)clazz.getClassLoader()).getURLs(),
+                    cause);
+        }
         // first scan interfaces
         for (Class<?> itf : clazz.getInterfaces()) {
             result.addAll(collectAnnotations(itf));
